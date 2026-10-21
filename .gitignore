@@ -5,4 +5,8 @@ obj/
 *.user
 TestResults/
 data/
+# The source folder must not be caught by the case-insensitive "data/" rule above.
+!src/Bin4Scraper/Data/
 .env
+src/Bin4Scraper/Data/bin4scraper.db
+src/Bin4Scraper/Data/snapshots/
