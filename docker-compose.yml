@@ -1,0 +1,14 @@
+# Local Docker test: `docker compose up --build`, then open http://localhost:8080
+services:
+  bin4scraper:
+    build: .
+    image: ghcr.io/jsyro/bin4scraper:latest
+    container_name: bin4scraper
+    ports:
+      - "8080:8080"
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - ./data:/data
+    restart: unless-stopped

@@ -1,0 +1,135 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<section class="cards">
+    <div class="card">
+        <h3>Latest check</h3>
+        @if (Model.LatestCheck is { } latest)
+        {
+            <p><span class="badge @AppPageModel.StatusClass(latest.Status)">@latest.Status</span> @Schedule.Format(latest.StartedAt) (@latest.TriggeredBy)</p>
+            @if (latest.Error is not null)
+            {
+                <p class="error-text">@latest.Error</p>
+            }
+        }
+        else
+        {
+            <p class="muted">No checks yet.</p>
+        }
+        @if (Model.ConsecutiveFailures > 0)
+        {
+            <p class="error-text">@Model.ConsecutiveFailures consecutive failure(s).</p>
+        }
+    </div>
+    <div class="card">
+        <h3>Schedule</h3>
+        @if (Schedule.Enabled)
+        {
+            <p>Next check: <strong>@Schedule.Format(Schedule.NextCheckAt)</strong></p>
+            <p class="muted"><code>@Schedule.Expression</code> in @Schedule.Zone.Id</p>
+        }
+        else
+        {
+            <p class="warn-text">Scheduled checks are disabled.</p>
+        }
+    </div>
+    <div class="card">
+        <h3>Recipients</h3>
+        <p><strong>@Model.EnabledRecipients</strong> enabled · <a asp-page="/Recipients">manage</a></p>
+        <p class="muted">Categories: @Model.Scraper.Categories</p>
+    </div>
+</section>
+
+<section class="panel">
+    <h2>Current feature</h2>
+    @if (Model.LatestSuccess is { } success)
+    {
+        <p class="muted">@success.Title · scraped @Schedule.Format(success.StartedAt) · <a href="@Model.Scraper.FeatureUrl" target="_blank" rel="noopener">source</a></p>
+        @foreach (var item in Model.LatestItems)
+        {
+            <div class="item">
+                <div><span class="tag">@item.Category</span> <strong>@item.Name</strong> <span class="price">@item.Price</span></div>
+                @if (item.Description is not null)
+                {
+                    <div>@item.Description</div>
+                }
+                @foreach (var note in item.Notes)
+                {
+                    <div class="muted">@note</div>
+                }
+            </div>
+        }
+        <details>
+            <summary>SMS text</summary>
+            <pre>@success.Message</pre>
+        </details>
+    }
+    else
+    {
+        <p class="muted">No successful check yet. Run one below.</p>
+    }
+
+    <div class="actions">
+        <form method="post" asp-page-handler="Check">
+            <button type="submit" title="Fetch now, record the result, and text recipients only if the feature changed">Check now</button>
+        </form>
+        <form method="post" asp-page-handler="Preview">
+            <button type="submit" class="secondary" title="Fetch and parse without saving or sending">Preview (no send)</button>
+        </form>
+        <form method="post" asp-page-handler="SendLatest" onsubmit="return confirm('Text the current feature to all @Model.EnabledRecipients enabled recipient(s)?');">
+            <button type="submit" class="danger" title="Re-send the latest feature to every enabled recipient">Send latest to all</button>
+        </form>
+    </div>
+</section>
+
+@if (Model.Preview is not null || Model.PreviewError is not null)
+{
+    <section class="panel">
+        <h2>Preview</h2>
+        @if (Model.PreviewError is not null)
+        {
+            <p class="error-text">@Model.PreviewError</p>
+        }
+        else
+        {
+            <p class="muted">Parsed '@Model.Preview!.Menu.Title' with @Model.Preview.Menu.Items.Count item(s); @Model.Preview.Selected.Count match the configured categories. Fingerprint <code>@Model.Preview.Fingerprint</code>@(Model.Preview.Fingerprint == Model.LatestSuccess?.Fingerprint ? " (unchanged)" : " (new)").</p>
+            <table>
+                <thead><tr><th>Category</th><th>Name</th><th>Price</th><th>Description</th></tr></thead>
+                <tbody>
+                @foreach (var item in Model.Preview.Menu.Items)
+                {
+                    <tr class="@(Model.Preview.Selected.Contains(item) ? "selected" : "")">
+                        <td>@item.Category</td><td>@item.Name</td><td>@item.Price</td><td>@item.Description</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+            <h3>SMS text (@Model.Preview.Message.Length chars)</h3>
+            <pre>@Model.Preview.Message</pre>
+        }
+    </section>
+}
+
+<section class="panel">
+    <h2>Recent checks</h2>
+    <table>
+        <thead><tr><th>#</th><th>Started</th><th>Trigger</th><th>Status</th><th>Feature</th><th>Changed</th></tr></thead>
+        <tbody>
+        @foreach (var c in Model.RecentChecks)
+        {
+            <tr>
+                <td>@c.Id</td>
+                <td>@Schedule.Format(c.StartedAt)</td>
+                <td>@c.TriggeredBy</td>
+                <td><span class="badge @AppPageModel.StatusClass(c.Status)">@c.Status</span></td>
+                <td>@(c.Title ?? c.Error)</td>
+                <td>@(c.Changed ? "yes" : "")</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    <p><a asp-page="/History">Full history →</a> · <a href="/backup">Download database backup</a></p>
+</section>

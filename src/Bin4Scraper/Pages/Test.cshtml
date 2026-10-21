@@ -1,0 +1,50 @@
+@page
+@model TestModel
+@{
+    ViewData["Title"] = "Send test";
+}
+
+<section class="panel">
+    <h2>Send a test SMS</h2>
+    <p>Provider: <strong>@Model.ProviderDescription</strong></p>
+    @if (Model.ProviderDescription.StartsWith("Console"))
+    {
+        <p class="warn-text">The Console provider only writes messages to the container log. Set <code>Sms__Provider</code> to <code>Textbelt</code> or <code>Twilio</code> to send real texts.</p>
+    }
+
+    <form method="post">
+        <label>Phone
+            <input asp-for="Phone" type="tel" list="recipients" placeholder="250-555-1234" />
+        </label>
+        <datalist id="recipients">
+            @foreach (var r in Model.Recipients)
+            {
+                <option value="@r.Phone">@r.Name</option>
+            }
+        </datalist>
+        <label>Message
+            <textarea asp-for="Message" rows="8"></textarea>
+        </label>
+        <div class="actions">
+            <button type="submit" asp-page-handler="Send">Send now</button>
+            <button type="submit" asp-page-handler="UseFeature" class="secondary" title="Replace the message with the live feature text">Use live feature text</button>
+        </div>
+    </form>
+    <div asp-validation-summary="All" class="error-text"></div>
+</section>
+
+@if (Model.Result is { } result)
+{
+    <section class="panel">
+        <h2>Result</h2>
+        <p><span class="badge @AppPageModel.StatusClass(result.Status)">@result.Status</span> via @result.Provider to <code>@result.Phone</code></p>
+        @if (result.ProviderMessageId is not null)
+        {
+            <p>Provider message id: <code>@result.ProviderMessageId</code></p>
+        }
+        @if (result.Error is not null)
+        {
+            <p class="@(result.Status == "sent" ? "muted" : "error-text")">@result.Error</p>
+        }
+    </section>
+}

@@ -1,0 +1,29 @@
+﻿@inject Bin4Scraper.Sms.ISmsSender Sender
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] · Bin4Scraper</title>
+    <link rel="stylesheet" href="~/site.css" asp-append-version="true" />
+</head>
+<body>
+<header>
+    <nav>
+        <a class="brand" asp-page="/Index">🍔 Bin4Scraper</a>
+        <a asp-page="/Index">Dashboard</a>
+        <a asp-page="/Recipients">Recipients</a>
+        <a asp-page="/Test">Send test</a>
+        <a asp-page="/History">History</a>
+    </nav>
+    <span class="provider @(Sender.Name == "Console" ? "warn" : "")" title="Configured SMS provider">SMS: @Sender.Description</span>
+</header>
+<main>
+    @if (TempData["Flash"] is string flash)
+    {
+        <div class="flash @(TempData["FlashKind"] as string ?? "ok")">@flash</div>
+    }
+    @RenderBody()
+</main>
+</body>
+</html>

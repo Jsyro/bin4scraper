@@ -1,0 +1,47 @@
+@page
+@model RecipientsModel
+@{
+    ViewData["Title"] = "Recipients";
+}
+
+<section class="panel">
+    <h2>Recipients</h2>
+    <p class="muted">Enabled recipients receive a text whenever a scheduled or manual check finds a new feature.</p>
+    <table>
+        <thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Added</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var r in Model.Recipients)
+        {
+            <tr class="@(r.Enabled ? "" : "disabled")">
+                <td>@r.Name</td>
+                <td><code>@r.Phone</code></td>
+                <td><span class="badge @(r.Enabled ? "ok" : "")">@(r.Enabled ? "enabled" : "disabled")</span></td>
+                <td>@Schedule.Format(r.CreatedAt)</td>
+                <td class="row-actions">
+                    <a asp-page="/Test" asp-route-phone="@r.Phone">test</a>
+                    <form method="post" asp-page-handler="Toggle" asp-route-id="@r.Id">
+                        <button type="submit" class="link">@(r.Enabled ? "disable" : "enable")</button>
+                    </form>
+                    <form method="post" asp-page-handler="Delete" asp-route-id="@r.Id" onsubmit="return confirm('Remove @r.Name?');">
+                        <button type="submit" class="link danger-text">remove</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        @if (Model.Recipients.Count == 0)
+        {
+            <tr><td colspan="5" class="muted">No recipients yet.</td></tr>
+        }
+        </tbody>
+    </table>
+</section>
+
+<section class="panel">
+    <h2>Add recipient</h2>
+    <form method="post" asp-page-handler="Add" class="form-row">
+        <label>Name <input asp-for="Name" placeholder="Jason" /></label>
+        <label>Phone <input asp-for="Phone" type="tel" placeholder="250-555-1234" /></label>
+        <button type="submit">Add</button>
+    </form>
+    <div asp-validation-summary="All" class="error-text"></div>
+</section>
