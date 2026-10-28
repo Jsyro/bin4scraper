@@ -22,7 +22,7 @@
                     <form method="post" asp-page-handler="Toggle" asp-route-id="@r.Id">
                         <button type="submit" class="link">@(r.Enabled ? "disable" : "enable")</button>
                     </form>
-                    <form method="post" asp-page-handler="Delete" asp-route-id="@r.Id" onsubmit="return confirm('Remove @r.Name?');">
+                    <form method="post" asp-page-handler="Delete" asp-route-id="@r.Id" data-recipient-name="@r.Name" onsubmit="return confirm('Remove ' + this.dataset.recipientName + '?');">
                         <button type="submit" class="link danger-text">remove</button>
                     </form>
                 </td>
