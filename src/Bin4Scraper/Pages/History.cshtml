@@ -1,0 +1,64 @@
+@page
+@model HistoryModel
+@{
+    ViewData["Title"] = "History";
+}
+
+<section class="panel">
+    <h2>Deliveries</h2>
+    <p class="muted"><strong>unknown</strong> means the provider may have sent the message (e.g. a timeout); these are never retried automatically to avoid duplicate texts.</p>
+    <table>
+        <thead><tr><th>#</th><th>Created</th><th>Kind</th><th>Phone</th><th>Status</th><th>Provider</th><th>Attempts</th><th>Details</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var d in Model.Deliveries)
+        {
+            <tr>
+                <td>@d.Id</td>
+                <td>@Schedule.Format(d.CreatedAt)</td>
+                <td>@d.Kind</td>
+                <td><code>@d.Phone</code></td>
+                <td><span class="badge @AppPageModel.StatusClass(d.Status)">@d.Status</span></td>
+                <td>@d.Provider</td>
+                <td>@d.Attempts</td>
+                <td>
+                    <details><summary>@(d.Error ?? d.ProviderMessageId ?? "message")</summary><pre>@d.Message</pre></details>
+                </td>
+                <td>
+                    @if (d.Status is "failed" or "unknown" or "sent")
+                    {
+                        <form method="post" asp-page-handler="Resend" asp-route-id="@d.Id" onsubmit="return confirm('Send this message to @d.Phone again?');">
+                            <button type="submit" class="link">resend</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+        @if (Model.Deliveries.Count == 0)
+        {
+            <tr><td colspan="9" class="muted">No deliveries yet.</td></tr>
+        }
+        </tbody>
+    </table>
+</section>
+
+<section class="panel">
+    <h2>Checks</h2>
+    <table>
+        <thead><tr><th>#</th><th>Started</th><th>Trigger</th><th>Status</th><th>Feature / error</th><th>Fingerprint</th><th>Changed</th><th>Snapshot</th></tr></thead>
+        <tbody>
+        @foreach (var c in Model.Checks)
+        {
+            <tr>
+                <td>@c.Id</td>
+                <td>@Schedule.Format(c.StartedAt)</td>
+                <td>@c.TriggeredBy</td>
+                <td><span class="badge @AppPageModel.StatusClass(c.Status)">@c.Status</span></td>
+                <td class="@(c.Error is null ? "" : "error-text")">@(c.Title ?? c.Error)</td>
+                <td><code>@c.Fingerprint</code></td>
+                <td>@(c.Changed ? "yes" : "")</td>
+                <td class="muted">@c.SnapshotFile</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</section>

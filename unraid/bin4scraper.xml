@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>bin4scraper</Name>
+  <Repository>ghcr.io/jsyro/bin4scraper:latest</Repository>
+  <Registry>https://github.com/Jsyro/bin4scraper/pkgs/container/bin4scraper</Registry>
+  <Network>bridge</Network>
+  <Shell>bash</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/Jsyro/bin4scraper/issues</Support>
+  <Project>https://github.com/Jsyro/bin4scraper</Project>
+  <Overview>Checks the Bin 4 Burger Lounge monthly features page on a schedule and texts the new feature burger to a list of recipients when it changes. Includes a small web UI for recipients, test messages and history.</Overview>
+  <Category>Tools: Other:</Category>
+  <WebUI>http://[IP]:[PORT:8080]/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/Jsyro/bin4scraper/master/unraid/bin4scraper.xml</TemplateURL>
+  <Icon/>
+  <ExtraParams>--user 99:100</ExtraParams>
+  <PostArgs/>
+  <Requires>Create the appdata folder first and give it to nobody:users -- mkdir -p /mnt/user/appdata/bin4scraper &amp;&amp; chown 99:100 /mnt/user/appdata/bin4scraper</Requires>
+  <Config Name="Web UI port" Target="8080" Default="8080" Mode="tcp" Description="Port for the web interface." Type="Port" Display="always" Required="true" Mask="false">8080</Config>
+  <Config Name="Data" Target="/data" Default="/mnt/user/appdata/bin4scraper" Mode="rw" Description="SQLite database, page snapshots and keys. Must be writable by 99:100." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/bin4scraper</Config>
+  <Config Name="SMS provider" Target="Sms__Provider" Default="Console|Textbelt|Twilio" Mode="" Description="Console = dry run (messages only appear in the log). Textbelt or Twilio send real texts." Type="Variable" Display="always" Required="true" Mask="false">Console</Config>
+  <Config Name="Textbelt key" Target="Sms__Textbelt__Key" Default="" Mode="" Description="API key from textbelt.com." Type="Variable" Display="always" Required="false" Mask="true"></Config>
+  <Config Name="Textbelt test mode" Target="Sms__Textbelt__TestMode" Default="false|true" Mode="" Description="true = Textbelt validates requests but does not send or use quota." Type="Variable" Display="always" Required="false" Mask="false">false</Config>
+  <Config Name="Twilio Account SID" Target="Sms__Twilio__AccountSid" Default="" Mode="" Description="Twilio Account SID (AC...)." Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
+  <Config Name="Twilio Auth Token" Target="Sms__Twilio__AuthToken" Default="" Mode="" Description="Twilio Auth Token." Type="Variable" Display="advanced" Required="false" Mask="true"></Config>
+  <Config Name="Twilio From number" Target="Sms__Twilio__From" Default="" Mode="" Description="Your Twilio phone number in +1XXXXXXXXXX format." Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
+  <Config Name="Admin phone" Target="Sms__AdminPhone" Default="" Mode="" Description="Optional. Texted when checks fail several times in a row." Type="Variable" Display="always" Required="false" Mask="false"></Config>
+  <Config Name="Categories" Target="Scraper__Categories" Default="Burger" Mode="" Description="Comma-separated menu categories to text (e.g. Burger,Dessert) or * for everything." Type="Variable" Display="always" Required="false" Mask="false">Burger</Config>
+  <Config Name="Schedule" Target="Scraper__Schedule" Default="0 9 * * *" Mode="" Description="Cron expression for checks (minute hour day month weekday). Messages are only sent when the feature changes." Type="Variable" Display="always" Required="false" Mask="false">0 9 * * *</Config>
+  <Config Name="Time zone" Target="Scraper__TimeZone" Default="America/Vancouver" Mode="" Description="IANA time zone used for the schedule." Type="Variable" Display="advanced" Required="false" Mask="false">America/Vancouver</Config>
+  <Config Name="Container time zone" Target="TZ" Default="America/Vancouver" Mode="" Description="Time zone for log timestamps." Type="Variable" Display="advanced" Required="false" Mask="false">America/Vancouver</Config>
+  <Config Name="UI username" Target="Ui__Username" Default="admin" Mode="" Description="Username for the web UI (only used when a password is set)." Type="Variable" Display="advanced" Required="false" Mask="false">admin</Config>
+  <Config Name="UI password" Target="Ui__Password" Default="" Mode="" Description="Optional. Set to require a login for the web UI." Type="Variable" Display="always" Required="false" Mask="true"></Config>
+</Container>

@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Bin4Scraper/Bin4Scraper.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Bin4Scraper.Tests/Bin4Scraper.Tests.csproj" />
+  </Folder>
+</Solution>

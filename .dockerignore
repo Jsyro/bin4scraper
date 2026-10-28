@@ -1,0 +1,12 @@
+**/bin/
+**/obj/
+**/data/
+**/TestResults/
+.git/
+.github/
+.vs/
+.vscode/
+.env
+*.md
+unraid/
+tests/
