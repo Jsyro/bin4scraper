@@ -10,5 +10,8 @@ services:
       - path: .env
         required: false
     volumes:
-      - ./data:/data
+      - bin4scraper-data:/data
     restart: unless-stopped
+
+volumes:
+  bin4scraper-data:
