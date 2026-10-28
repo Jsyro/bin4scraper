@@ -151,7 +151,7 @@ internal static class SmsHttp
         {
             return await send();
         }
-        catch (HttpRequestException ex) when (ex.HttpRequestError is HttpRequestError.NameResolutionError or HttpRequestError.ConnectionError or HttpRequestError.SecureConnectionError)
+        catch (HttpRequestException ex) when (ex.HttpRequestError is HttpRequestError.NameResolutionError or HttpRequestError.SecureConnectionError)
         {
             return new SmsResult(SmsOutcome.Failed, Error: ex.Message);
         }
