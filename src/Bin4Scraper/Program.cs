@@ -14,7 +14,7 @@ if (args is ["healthcheck", ..])
     return await Cli.HealthCheckAsync();
 }
 
-var cliCommand = args is [var first, ..] && !first.StartsWith('-') ? first : null;
+var cliCommand = args is [var first, ..] && (!first.StartsWith('-') || first is "--help" or "-h") ? first : null;
 
 // In CLI mode only "--Section:Key=value" overrides reach configuration; command flags are parsed by Cli.
 var builder = WebApplication.CreateBuilder(cliCommand is null ? args : args.Where(a => a.StartsWith("--") && a.Contains('=')).ToArray());
