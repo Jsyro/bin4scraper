@@ -31,7 +31,9 @@ public static class PhoneNumber
         }
         else if (countryCode != "1" && digits.Length is >= 6 and <= 14)
         {
-            e164 = "+" + countryCode + digits.TrimStart('0');
+            var internationalDigits = countryCode + digits.TrimStart('0');
+            if (internationalDigits.Length is < 8 or > 15) return false;
+            e164 = "+" + internationalDigits;
         }
         return e164 is not null;
     }
