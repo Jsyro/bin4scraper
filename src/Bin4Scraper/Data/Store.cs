@@ -113,6 +113,33 @@ public sealed class Store
     {
         using var connection = Open();
         using var transaction = connection.BeginTransaction();
+        CompleteCheck(connection, check, deliveries, transaction);
+        transaction.Commit();
+    }
+
+    /// <summary>Determines whether a successful check changed and saves it with its deliveries atomically.</summary>
+    public int CompleteSuccessfulCheck(CheckRun check, bool notifyOnFirstRun, IReadOnlyList<Delivery> deliveries)
+    {
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction(deferred: false);
+        var previousFingerprint = connection.QueryFirstOrDefault<string>(
+            "SELECT fingerprint FROM checks WHERE status = @status AND id <> @id ORDER BY id DESC LIMIT 1",
+            new { status = CheckStatus.Succeeded, id = check.Id }, transaction);
+        check.Changed = previousFingerprint is null
+            ? notifyOnFirstRun
+            : previousFingerprint != check.Fingerprint;
+        var queued = check.Changed ? deliveries : Array.Empty<Delivery>();
+        CompleteCheck(connection, check, queued, transaction);
+        transaction.Commit();
+        return queued.Count;
+    }
+
+    private static void CompleteCheck(
+        SqliteConnection connection,
+        CheckRun check,
+        IReadOnlyList<Delivery> deliveries,
+        SqliteTransaction transaction)
+    {
         connection.Execute("""
             UPDATE checks SET completed_at = @CompletedAt, status = @Status, title = @Title, fingerprint = @Fingerprint,
                 items_json = @ItemsJson, message = @Message, changed = @Changed, error = @Error, snapshot_file = @SnapshotFile
@@ -122,7 +149,6 @@ public sealed class Store
         {
             delivery.Id = InsertDelivery(connection, delivery, transaction);
         }
-        transaction.Commit();
     }
 
     public CheckRun? GetLatestCheck()

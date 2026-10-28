@@ -49,6 +49,37 @@ public sealed class CheckServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task Concurrent_checks_queue_change_deliveries_only_once()
+    {
+        var fetched = 0;
+        var fetchBarrier = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var source = new FakeSource
+        {
+            Html = Page("Bin 1 - First"),
+            BeforeReturn = async cancellationToken =>
+            {
+                if (Interlocked.Increment(ref fetched) == 2)
+                {
+                    fetchBarrier.TrySetResult();
+                }
+                await fetchBarrier.Task.WaitAsync(cancellationToken);
+            },
+        };
+        var sms = Options.Create(new SmsOptions { DelayBetweenMessagesMs = 0 });
+        var deliveries = new DeliveryService(_store, _sender, sms, TimeProvider.System, NullLogger<DeliveryService>.Instance);
+        var checks = Enumerable.Range(0, 2)
+            .Select(_ => new CheckService(source, _store, deliveries, Options.Create(new ScraperOptions()), sms,
+                TimeProvider.System, NullLogger<CheckService>.Instance))
+            .ToArray();
+
+        var runs = await Task.WhenAll(checks.Select(check => check.RunAsync("test", default)));
+
+        Assert.Single(runs, run => run.Changed);
+        Assert.Equal(2, _store.GetRecentDeliveries(10).Count);
+        Assert.Equal(2, _sender.Sent.Count);
+    }
+
+    [Fact]
     public async Task Disabled_recipients_are_skipped()
     {
         _store.SetRecipientEnabled(_store.GetRecipients().First(r => r.Name == "Bob").Id, false);
@@ -107,7 +138,16 @@ public sealed class CheckServiceTests : IDisposable
     {
         public string Html { get; set; } = "";
         public Uri Url { get; } = new("https://example.test/monthly-features/");
-        public Task<string> FetchAsync(CancellationToken cancellationToken) => Task.FromResult(Html);
+        public Func<CancellationToken, Task>? BeforeReturn { get; set; }
+
+        public async Task<string> FetchAsync(CancellationToken cancellationToken)
+        {
+            if (BeforeReturn is not null)
+            {
+                await BeforeReturn(cancellationToken);
+            }
+            return Html;
+        }
     }
 
     private sealed class FakeSender : ISmsSender

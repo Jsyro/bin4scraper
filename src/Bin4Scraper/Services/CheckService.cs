@@ -44,20 +44,18 @@ public sealed class CheckService(
                 var html = await source.FetchAsync(cancellationToken);
                 check.SnapshotFile = SaveSnapshot(check, html);
                 var preview = Build(html);
-                var previous = store.GetLatestSucceededCheck(excludingId: check.Id);
 
                 check.Title = preview.Menu.Title;
                 check.Fingerprint = preview.Fingerprint;
                 check.ItemsJson = JsonSerializer.Serialize(preview.Selected);
                 check.Message = preview.Message;
-                check.Changed = previous is null ? _scraper.NotifyOnFirstRun : previous.Fingerprint != preview.Fingerprint;
                 check.Status = CheckStatus.Succeeded;
                 check.CompletedAt = time.GetUtcNow();
 
-                var queued = check.Changed ? CreateFeatureDeliveries(check.Id, preview.Message) : [];
-                store.CompleteCheck(check, queued);
+                var queued = CreateFeatureDeliveries(check.Id, preview.Message);
+                var queuedCount = store.CompleteSuccessfulCheck(check, _scraper.NotifyOnFirstRun, queued);
                 logger.LogInformation("Check {Id} succeeded: '{Title}' ({Fingerprint}), changed={Changed}, queued {Count} message(s)",
-                    check.Id, check.Title, check.Fingerprint, check.Changed, queued.Count);
+                    check.Id, check.Title, check.Fingerprint, check.Changed, queuedCount);
             }
             catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
             {
