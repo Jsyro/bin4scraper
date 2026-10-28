@@ -233,6 +233,32 @@ public sealed class Store
             """, delivery);
     }
 
+    public bool TryClaimDelivery(Delivery delivery, string provider, DateTimeOffset attemptedAt)
+    {
+        using var connection = Open();
+        var claimed = connection.Execute("""
+            UPDATE deliveries SET status = @unknown, attempts = attempts + 1, provider = @provider, last_attempt_at = @attemptedAt
+            WHERE id = @id AND status = @pending
+            """, new
+        {
+            unknown = DeliveryStatus.Unknown,
+            provider,
+            attemptedAt,
+            id = delivery.Id,
+            pending = DeliveryStatus.Pending,
+        });
+        if (claimed == 0)
+        {
+            return false;
+        }
+
+        delivery.Status = DeliveryStatus.Unknown;
+        delivery.Attempts++;
+        delivery.Provider = provider;
+        delivery.LastAttemptAt = attemptedAt;
+        return true;
+    }
+
     public Delivery? GetDelivery(long id)
     {
         using var connection = Open();

@@ -76,9 +76,10 @@ public sealed class DeliveryService(
 
     private async Task AttemptAsync(Delivery delivery, bool retryable, CancellationToken cancellationToken)
     {
-        delivery.Attempts++;
-        delivery.LastAttemptAt = time.GetUtcNow();
-        delivery.Provider = sender.Name;
+        if (!store.TryClaimDelivery(delivery, sender.Name, time.GetUtcNow()))
+        {
+            return;
+        }
 
         SmsResult result;
         try
